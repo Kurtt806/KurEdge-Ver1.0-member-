@@ -1,4 +1,7 @@
 #include <Arduino.h>
+
+
+
 //*****************************************
 /*
  * CHÚ Ý TẤT CẢ THÔNG TIN CÓ TRONG NÀY !!!
@@ -15,8 +18,10 @@
 
 //*---THAY ĐỔI SSID VÀ PASS MANAGER--------
 
-#define MANAGER_WIFI_NAME "kur12345"
-#define MANAGER_WIFI_PASS "12345678"
+
+
+#define MANAGER_WIFI_NAME_AP "kur12345"
+#define MANAGER_WIFI_PASS_AP "12345678"
 
 //*---THAY ĐỔI THÔNG SỐ SERVO--------------
 
@@ -40,3 +45,24 @@ void loop()
 {
   KurEdge.run();
 }
+ 
+
+/*
+#include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h>
+#include <DNSServer.h>
+
+void setup()
+{
+  Serial.begin(115200);
+}
+void loop()
+{
+
+}
+*/
+
+
+
+
+

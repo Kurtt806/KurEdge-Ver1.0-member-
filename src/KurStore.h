@@ -1,9 +1,9 @@
 
-#if defined(MANAGER_WIFI_NAME) && !defined(MANAGER_WIFI_PASS)
-MANAGER_WIFI_PASS = NULL;
+#if defined(MANAGER_WIFI_NAME_AP) && !defined(MANAGER_WIFI_PASS_AP)
+MANAGER_WIFI_PASS_AP = NULL;
 #endif
 
-#if !defined(MANAGER_WIFI_NAME)
+#if !defined(MANAGER_WIFI_NAME_AP)
 #error "Please specify your MANAGER_WIFI_NAME and MANAGER_WIFI_PASS"
 #endif
 
@@ -16,8 +16,8 @@ MANAGER_WIFI_PASS = NULL;
 #include "ServoEasing.hpp"
 #include <Ticker.h>
 
-const char SSID[] = MANAGER_WIFI_NAME;
-const char PASS[] = MANAGER_WIFI_PASS;
+//const char SSID[] = MANAGER_WIFI_NAME_AP;
+//const char PASS[] = MANAGER_WIFI_PASS_AP;
 IPAddress _ip = IPAddress(192, 168, 1, 11);
 IPAddress _gw = IPAddress(192, 168, 1, 1);
 IPAddress _sn = IPAddress(255, 255, 255, 0);
@@ -177,3 +177,4 @@ void ESP_Phone()
     client.write("\n");
     client.write("ON on\n");
 }
+

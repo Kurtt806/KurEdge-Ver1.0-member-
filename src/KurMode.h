@@ -13,7 +13,12 @@ void tick()
 {
     (digitalRead(BOARD_LED_PIN) == LOW) ? digitalWrite(BOARD_LED_PIN, HIGH) : digitalWrite(BOARD_LED_PIN, LOW);
 }
-
+void saveConfigCallback (WiFiManager *myWiFiManager) {
+  Serial.println("Entered config mode");
+  Serial.println(WiFi.softAPIP());
+  //if you used auto generated SSID, print it
+  Serial.println(myWiFiManager->getConfigPortalSSID());
+}
 void enterManagerMode()
 {
     KurState::set(MODE_MANAGER);
@@ -25,12 +30,12 @@ void enterManagerMode()
     WiFi.mode(WIFI_OFF);
     delay(3000);
     WiFiManager wifiManager;
-    // wifiManager.setBreakAfterConfig(true);
+
     wifiManager.setSTAStaticIPConfig(_ip, _gw, _sn);
     if (digitalRead(BOARD_BUTTON_PIN) == BOARD_BUTTON_ACTIVE)
     {
         ticker.attach(0.4, tick);
-        if (!wifiManager.autoConnect(SSID, PASS))
+        if (!wifiManager.autoConnect(MANAGER_WIFI_NAME_AP, MANAGER_WIFI_PASS_AP))
         {
             Serial.println("---Wifi not connected---");
             delay(2000);
@@ -52,9 +57,15 @@ void enterStaSwitch()
     //*---------------------------------------------
     ticker.attach(1.5, tick);
     WiFi.mode(WIFI_STA);
-    Serial.print("---SSID: ");
+    Serial.println("*********CONNECTED************");
+    Serial.print("---SSID = ");
     Serial.println(WiFi.SSID());
-
+    uint8_t macAddr[6];
+    WiFi.softAPmacAddress(macAddr);
+    Serial.printf("---MACA = %02x:%02x:%02x:%02x:%02x:%02x\n", macAddr[0], macAddr[1], macAddr[2], macAddr[3], macAddr[4], macAddr[5]);
+    Serial.print("---IPAR = ");
+    Serial.println(WiFi.localIP());
+    Serial.println("******************************");
     serverRobo.begin();
 
     KurState::set(MODE_RUNNING);
@@ -115,7 +126,7 @@ void enterConfigMode()
     //*---------------------------------------------
     ticker.attach(0.1, tick);
     WiFiManager wifiManager;
-    wifiManager.startConfigPortal(SSID, PASS);
+    wifiManager.startConfigPortal(MANAGER_WIFI_NAME_AP, MANAGER_WIFI_PASS_AP);
 
     KurState::set(MODE_MANAGER);
 }
