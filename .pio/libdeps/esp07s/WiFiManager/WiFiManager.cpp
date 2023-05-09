@@ -166,6 +166,8 @@ boolean WiFiManager::autoConnect(char const *apName, char const *apPassword) {
   DEBUG_WM(F("AutoConnect"));
 
   // read eeprom for ssid and pass
+  //String ssid = getSSID();
+  //String pass = getPassword();
 
   // attempt to connect; should it fail, fall back to AP
   WiFi.mode(WIFI_STA);

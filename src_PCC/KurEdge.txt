@@ -21,7 +21,23 @@ inline void KurState::set(State m)
 
 void app_loop()
 {
-
+#if defined(KURCORES)
+    if (CLIENT_ALIVE == true)
+    {
+        if (millis() - aliveSentTime > 2000)
+        {
+            CLIENT_DIE = true;
+        }
+        else
+        {
+            CLIENT_DIE = false;
+        }
+    }
+    else
+    {
+        aliveSentTime = millis();
+    }
+#endif
 }
 
 class KurEdge
@@ -42,9 +58,9 @@ public:
         case MODE_RUNNING:
             enterRunWithChecks();
             break;
-        // case MODE_SWITCH_AP:
-        //     enterApSwitch();
-        //     break;
+        case MODE_SWITCH_AP:
+            enterApSwitch();
+            break;
         case MODE_CONFIGURING:
             enterConfigMode();
             break;
@@ -53,6 +69,9 @@ public:
             break;
         case MODE_MANAGER:
             enterManagerMode();
+            break;
+        case MODE_OTO_CODE:
+            enterOTOCODE();
             break;
         default:
             enterManagerMode();
