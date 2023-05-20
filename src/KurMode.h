@@ -14,12 +14,12 @@ void tick()
     (digitalRead(BOARD_LED_PIN) == LOW) ? digitalWrite(BOARD_LED_PIN, HIGH) : digitalWrite(BOARD_LED_PIN, LOW);
 }
 
-// void saveConfigCallback(WiFiManager *myWiFiManager)
-// {
-//     Serial.println("Entered config mode");
-//     Serial.println(WiFi.softAPIP());
-//     Serial.println(myWiFiManager->getConfigPortalSSID());
-// }
+void saveConfigCallback(WiFiManager *myWiFiManager)
+{
+    Serial.println("Entered config mode");
+    Serial.println(WiFi.softAPIP());
+    Serial.println(myWiFiManager->getConfigPortalSSID());
+}
 
 void enterManagerMode()
 {
@@ -27,7 +27,10 @@ void enterManagerMode()
     Serial.println("---this is MODE_MANAGER---");
     //*---------------------------------------------
     ticker.attach(0.5, tick);
-
+#if defined(KURCORES)
+    CLIENT_ALIVE = false;
+    RESTARTWIFI = false;
+#endif
     WiFi.mode(WIFI_OFF);
     delay(2000);
     WiFiManager wifiManager;
@@ -38,7 +41,7 @@ void enterManagerMode()
         if (!wifiManager.autoConnect(MANAGER_WIFI_NAME_AP, MANAGER_WIFI_PASS_AP))
         {
             Serial.println("---Wifi not connected---");
-            delay(100);
+            delay(2000);
             KurState::set(MODE_RESET);
         }
         KurState::set(MODE_SWITCH_STA);
@@ -67,16 +70,21 @@ void enterStaSwitch()
     Serial.println(WiFi.localIP());
     Serial.println("******************************");
     serverRobo.begin();
+#if defined(KURCORES)
     KurState::set(MODE_RUNNING);
+#endif
+#if defined(OTOCORES)
+    KurState::set(MODE_OTO_CODE);
+#endif
 }
 
 void enterRunWithChecks()
 {
 
     KurState::set(MODE_RUNNING);
-    Serial.println("---this is MODE_RUNNING---");
+    // Serial.println("---this is MODE_RUNNING---");
     //*---------------------------------------------
-
+#if defined(KURCORES)
     switch (client.connected())
     {
     case true:
@@ -84,7 +92,8 @@ void enterRunWithChecks()
         digitalWrite(BOARD_LED_PIN, LOW);
         if (client.available())
         {
-            runotocore();
+            Phone_ESP();
+            CLIENT_ALIVE = true;
         }
         break;
     case false:
@@ -93,17 +102,32 @@ void enterRunWithChecks()
     default:
         break;
     }
-
+    if (CLIENT_ALIVE == true && CLIENT_DIE == true)
+    {
+        KurState::set(MODE_MANAGER);
+    }
+    if (millis() - timeSinceREFRESH > REFRESH_DURATION)
+    {
+        // -> data transmit
+        ESP_Phone();
+        timeSinceREFRESH = millis();
+    }
+    if (RESTARTWIFI == true)
+    {
+        KurState::set(MODE_RESET);
+    }
+#endif
     KurState::is(MODE_RUNNING);
 }
 
-// void enterApSwitch()
-// {
-//     KurState::set(MODE_SWITCH_AP);
-//     Serial.println("---this is MODE_SWITCH_AP---");
-//     //*---------------------------------------------
-//     KurState::set(MODE_CONFIGURING);
-// }
+void enterApSwitch()
+{
+    KurState::set(MODE_SWITCH_AP);
+    Serial.println("---this is MODE_SWITCH_AP---");
+    //*---------------------------------------------
+
+    KurState::set(MODE_CONFIGURING);
+}
 
 void enterConfigMode()
 {
@@ -113,6 +137,7 @@ void enterConfigMode()
     ticker.attach(0.1, tick);
     WiFiManager wifiManager;
     wifiManager.startConfigPortal(MANAGER_WIFI_NAME_AP, MANAGER_WIFI_PASS_AP);
+
     KurState::set(MODE_MANAGER);
 }
 
@@ -121,5 +146,44 @@ void enterReset()
     KurState::set(MODE_RESET);
     Serial.println("---this is MODE_RESET---");
     //*---------------------------------------------
+    // delay(1000);
+    /*
+    unsigned long timeoutMs = millis() + 5000;
+    while (timeoutMs > millis())
+    {
+        // all control go to home
+        delay(10);
+        app_loop();
+        if (!KurState::is(MODE_RESET))
+        {
+            return;
+        }
+    }
+    */
     restartMCU();
+}
+
+void enterOTOCODE()
+{
+    KurState::set(MODE_OTO_CODE);
+#if defined(OTOCORES)
+    switch (client.connected())
+    {
+    case true:
+        ticker.detach();
+        digitalWrite(BOARD_LED_PIN, LOW);
+        if (client.available())
+        {
+
+            runotocore();
+        }
+        break;
+    case false:
+        client = serverRobo.available();
+        break;
+    default:
+        break;
+    }
+#endif
+    KurState::is(MODE_OTO_CODE);
 }
